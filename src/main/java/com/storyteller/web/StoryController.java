@@ -1,5 +1,6 @@
 package com.storyteller.web;
 
+import com.storyteller.service.ClipdropImageService;
 import com.storyteller.service.GptStoryService;
 import com.storyteller.web.dto.StoryPromptRequest;
 import com.storyteller.web.dto.StoryResponse;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class StoryController {
 
     private final GptStoryService gptStoryService;
+    private final ClipdropImageService clipdropImageService;
 
-    public StoryController(GptStoryService gptStoryService) {
+    public StoryController(GptStoryService gptStoryService, ClipdropImageService clipdropImageService) {
         this.gptStoryService = gptStoryService;
+        this.clipdropImageService = clipdropImageService;
     }
 
     @GetMapping(path = "/health", produces = MediaType.TEXT_PLAIN_VALUE)
@@ -30,7 +33,13 @@ public class StoryController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public StoryResponse generate(@Valid @RequestBody StoryPromptRequest request) {
-        String story = gptStoryService.generateStoryContinuation(request.prompt(), request.maxTokens());
-        return new StoryResponse(story);
+        String story = gptStoryService.generateStoryContinuation(request.prompt(), request.maxTokens(), request.getRequestType());
+
+        if (request.shouldGenerateImage()) {
+            // Temporarily disabled: image generation is paused.
+            return new StoryResponse(story, null, null);
+        }
+
+        return new StoryResponse(story, null, null);
     }
 }
